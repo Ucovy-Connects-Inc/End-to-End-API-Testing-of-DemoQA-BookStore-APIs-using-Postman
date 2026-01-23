@@ -1,0 +1,406 @@
+{
+  "info": {
+    "_postman_id": "e0a97b99-5f95-4a9b-9482-a8008a2b29ae",
+    "name": "API Testing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "51708382",
+    "_collection_link": "https://go.postman.co/collection/51708382-e0a97b99-5f95-4a9b-9482-a8008a2b29ae?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "user creation",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "{\r",
+              "    pm.test(\"Validating  user creation\", function(){\r",
+              "        pm.globals.set(\"userID\", pm.response.json().userID)\r",
+              "        pm.globals.set(\"username\", pm.response.json().username)\r",
+              "        pm.expect(pm.response.code).to.eql(201)\r",
+              "        \r",
+              "    })\r",
+              "}"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "//creates the user\r\n{\r\n  \"userName\": \"{{username}}\",\r\n  \"password\": \"{{password}}\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{BaseUrl}}/Account/v1/User",
+          "host": [
+            "{{BaseUrl}}"
+          ],
+          "path": [
+            "Account",
+            "v1",
+            "User"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Generate Token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "{\r",
+              "pm.test(\"Token is present\", function () {\r",
+              "    pm.globals.set(\"token\", pm.response.json().token)\r",
+              "        pm.expect(pm.response.code).to.eql(200)\r",
+              "})\r",
+              "}"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "//Generate the token for the created user\r\n{\r\n  \"userName\": \"{{username}}\",\r\n  \"password\": \"{{password}}\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{BaseUrl}}/Account/v1/GenerateToken",
+          "host": [
+            "{{BaseUrl}}"
+          ],
+          "path": [
+            "Account",
+            "v1",
+            "GenerateToken"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Authirization",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Response is true\", function () {\r",
+              "    pm.expect(pm.response.code).to.eql(200);\r",
+              "    })\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "//check user is authorised or not\r\n{\r\n  \"userName\": \"{{username}}\",\r\n  \"password\": \"{{password}}\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{BaseUrl}}/Account/v1/Authorized",
+          "host": [
+            "{{BaseUrl}}"
+          ],
+          "path": [
+            "Account",
+            "v1",
+            "Authorized"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Books from library",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "{\r",
+              "pm.test(\"Book list is present\", function () {\r",
+              "    const jsonData = pm.response.json();\r",
+              "    pm.expect(jsonData).to.have.property(\"books\");\r",
+              "    pm.expect(jsonData.books.length).to.be.above(0);\r",
+              "\r",
+              "})\r",
+              "const jsonData = pm.response.json();\r",
+              "const isbnsArray = jsonData.books.map(book => book.isbn);\r",
+              "pm.globals.set(\"isbnsArray\", JSON.stringify(isbnsArray));\r",
+              "pm.globals.set(\"isbnIndex\", 0);\r",
+              "}"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "//get book from library"
+        },
+        "url": {
+          "raw": "{{BaseUrl}}/BookStore/v1/Books",
+          "host": [
+            "{{BaseUrl}}"
+          ],
+          "path": [
+            "BookStore",
+            "v1",
+            "Books"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Add Books",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Books added and ISBNs stored\", function () {\r",
+              "\r",
+              "    pm.expect(pm.response.code).to.eql(400);\r",
+              "\r",
+              "    const response = pm.response.json();\r",
+              "\r",
+              "    // Extract ISBNs into array\r",
+              "    const isbnArray = response.books.map(book => book.isbn);\r",
+              "\r",
+              "    // Save as GLOBAL variable (stringified)\r",
+              "    pm.globals.set(\"isbnsArray\", JSON.stringify(isbnArray));\r",
+              "\r",
+              "    // Optional: reset loop index for PUT\r",
+              "    pm.globals.set(\"isbnIndex\", 0);\r",
+              "    const jsonResponse=pm.message;\r",
+              "    pm.expect(jsonResponse).to.have.property(\"code\", \"1210\");\r",
+              "    console.info(\"Json data\"+jsonResponse)\r",
+              "\r",
+              "});\r",
+              "\r",
+              "\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "\r",
+              "\r",
+              "// Get ISBN array from globals\r",
+              "const isbns = JSON.parse(pm.globals.get(\"isbnsArray\"));\r",
+              "\r",
+              "// Build collectionOfIsbns payload\r",
+              "const collection = isbns.map(isbn => ({\r",
+              "    isbn: isbn\r",
+              "}));\r",
+              "\r",
+              "// Log number of books\r",
+              "console.info(\"No of books Added: \" + collection.length);\r",
+              "\r",
+              "// Save payload as global variable\r",
+              "pm.globals.set(\"isbnPayload\", JSON.stringify(collection));\r",
+              "\r",
+              "// Generate a safe random index\r",
+              "const randomIndex = Math.floor(Math.random() * collection.length);\r",
+              "\r",
+              "// Pick a random ISBN\r",
+              "const randomISBN = collection[randomIndex].isbn;\r",
+              "\r",
+              "// Save random ISBN\r",
+              "pm.globals.set(\"randomISBN\", randomISBN);\r",
+              "\r",
+              "console.info(\"Random ISBN selected: \" + randomISBN);\r",
+              "\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "//add books to the created user \r\n{\r\n   \r\n  \"userId\": \"{{userID}}\",\r\n  \"collectionOfIsbns\": [\r\n    {\r\n        \"isbn\": \"{{randomISBN}}\"\r\n    }\r\n  ]\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{BaseUrl}}/BookStore/v1/Books",
+          "host": [
+            "{{BaseUrl}}"
+          ],
+          "path": [
+            "BookStore",
+            "v1",
+            "Books"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Put ISBN",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyTmFtZSI6InBhdmFuX3Rlc3RfMDA2IiwicGFzc3dvcmQiOiJQYXNzd29yZEAxMjMiLCJpYXQiOjE3NjkxMzM2Mjh9.pSn6E0iZoNnj73gNDZT7b_zxi1gGRJMr9I_intZCFaE",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "//replaces one existing book in a user’s collection with another valid book from the store catalog.\r\n{\r\n  \"userId\": \"14f4e069-6d6b-4fb4-9ed2-d841d4426c0a\",\r\n  \"isbn\": \"9781491904244\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{BaseUrl}}/BookStore/v1/Books/9781449331818",
+          "host": [
+            "{{BaseUrl}}"
+          ],
+          "path": [
+            "BookStore",
+            "v1",
+            "Books",
+            "9781449331818"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Book",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyTmFtZSI6InBhdmFuX3Rlc3RfMDA2IiwicGFzc3dvcmQiOiJQYXNzd29yZEAxMjMiLCJpYXQiOjE3NjkxMzM2Mjh9.pSn6E0iZoNnj73gNDZT7b_zxi1gGRJMr9I_intZCFaE",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "DELETE",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "//Delete IsBN for user\r\n{\r\n  \"isbn\": \"9781491904244\",\r\n  \"userId\": \"14f4e069-6d6b-4fb4-9ed2-d841d4426c0a\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{BaseUrl}}/BookStore/v1/Book",
+          "host": [
+            "{{BaseUrl}}"
+          ],
+          "path": [
+            "BookStore",
+            "v1",
+            "Book"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "BaseUrl",
+      "value": "",
+      "type": "default"
+    }
+  ]
+}
