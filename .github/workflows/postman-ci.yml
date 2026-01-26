@@ -22,7 +22,7 @@ jobs:
 
       - name: Run Postman Collection
         run: |
-          newman run postman/DemoQA.postman_collection.json \
+         newman run DemoQA.postman_collection.json \
           -r cli,html \
           --reporter-html-export newman-report.html
 
@@ -31,4 +31,5 @@ jobs:
         with:
           name: postman-report
           path: newman-report.html
+
 
