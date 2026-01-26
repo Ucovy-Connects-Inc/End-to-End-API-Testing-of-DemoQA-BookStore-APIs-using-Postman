@@ -1,27 +1,34 @@
-      name: Postman CI
-      
-      on:
-        push:
-          branches: [ main ]
-        pull_request:
-          branches: [ main ]
-      
-      jobs:
-        test:
-          runs-on: ubuntu-latest
-          steps:
-            - uses: actions/checkout@v4
-      
-            - name: Run Postman Collection
-              run: |
-                newman run postman/DemoQA.postman_collection.json \
-                --env-var baseUrl=https://demoqa.com \
-                --env-var password=${{ secrets.DEMOQA_PASSWORD }} \
-                -r cli,html \
-                --reporter-html-export newman-report.html
-      
-            - name: Upload Report
-              uses: actions/upload-artifact@v4
-              with:
-                name: postman-report
-                path: newman-report.html
+name: Postman CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Newman
+        run: npm install -g newman newman-reporter-html
+
+      - name: Run Postman Collection
+        run: |
+          newman run postman/DemoQA.postman_collection.json \
+          -r cli,html \
+          --reporter-html-export newman-report.html
+
+      - name: Upload Newman Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: postman-report
+          path: newman-report.html
+
