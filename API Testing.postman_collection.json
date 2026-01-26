@@ -162,18 +162,30 @@
           "listen": "test",
           "script": {
             "exec": [
-              "{\r",
-              "pm.test(\"Book list is present\", function () {\r",
-              "    const jsonData = pm.response.json();\r",
-              "    pm.expect(jsonData).to.have.property(\"books\");\r",
-              "    pm.expect(jsonData.books.length).to.be.above(0);\r",
+              "pm.test(\"Library books fetched\", function () {\r",
+              "    pm.expect(pm.response.code).to.eql(200);\r",
+              "});\r",
               "\r",
-              "})\r",
-              "const jsonData = pm.response.json();\r",
-              "const isbnsArray = jsonData.books.map(book => book.isbn);\r",
-              "pm.globals.set(\"isbnsArray\", JSON.stringify(isbnsArray));\r",
-              "pm.globals.set(\"isbnIndex\", 0);\r",
-              "}"
+              "const response = pm.response.json();\r",
+              "\r",
+              "// All available ISBNs in library\r",
+              "const libraryIsbns = response.books.map(book => book.isbn);\r",
+              "\r",
+              "pm.globals.set(\"libraryIsbns\", JSON.stringify(libraryIsbns));\r",
+              "\r",
+              "console.log(\"Library ISBNs:\", libraryIsbns);\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
             ],
             "type": "text/javascript",
             "packages": {},
@@ -209,33 +221,83 @@
       "response": []
     },
     {
+      "name": "Get user details",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"User details fetched\", function () {",
+              "    pm.expect(pm.response.code).to.eql(200);",
+              "});",
+              "",
+              "const jsonData = pm.response.json();",
+              "",
+              "// Extract ISBNs already assigned to the user",
+              "const userIsbns = jsonData.books.map(book => book.isbn);",
+              "",
+              "// Store globally for later use",
+              "pm.globals.set(\"userIsbns\", JSON.stringify(userIsbns));",
+              "",
+              "console.log(\"User currently has ISBNs:\", userIsbns);",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "//Get all user library details",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{BaseUrl}}/Account/v1/User/{{userID}}",
+          "host": [
+            "{{BaseUrl}}"
+          ],
+          "path": [
+            "Account",
+            "v1",
+            "User",
+            "{{userID}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
       "name": "Add Books",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Books added and ISBNs stored\", function () {\r",
-              "\r",
-              "    pm.expect(pm.response.code).to.eql(400);\r",
-              "\r",
-              "    const response = pm.response.json();\r",
-              "\r",
-              "    // Extract ISBNs into array\r",
-              "    const isbnArray = response.books.map(book => book.isbn);\r",
-              "\r",
-              "    // Save as GLOBAL variable (stringified)\r",
-              "    pm.globals.set(\"isbnsArray\", JSON.stringify(isbnArray));\r",
-              "\r",
-              "    // Optional: reset loop index for PUT\r",
-              "    pm.globals.set(\"isbnIndex\", 0);\r",
-              "    const jsonResponse=pm.message;\r",
-              "    pm.expect(jsonResponse).to.have.property(\"code\", \"1210\");\r",
-              "    console.info(\"Json data\"+jsonResponse)\r",
-              "\r",
+              "pm.test(\"Book assignment API succeeded\", () => {\r",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
               "});\r",
-              "\r",
-              "\r",
               ""
             ],
             "type": "text/javascript",
@@ -247,33 +309,38 @@
           "listen": "prerequest",
           "script": {
             "exec": [
+              "// Read library ISBNs\r",
+              "const libraryIsbns = JSON.parse(pm.globals.get(\"libraryIsbns\") || \"[]\");\r",
               "\r",
+              "// Read user's ISBNs\r",
+              "const userIsbns = JSON.parse(pm.globals.get(\"userIsbns\") || \"[]\");\r",
               "\r",
-              "// Get ISBN array from globals\r",
-              "const isbns = JSON.parse(pm.globals.get(\"isbnsArray\"));\r",
+              "// Filter out already assigned books\r",
+              "const availableIsbns = libraryIsbns.filter(\r",
+              "    isbn => !userIsbns.includes(isbn)\r",
+              ");\r",
               "\r",
-              "// Build collectionOfIsbns payload\r",
-              "const collection = isbns.map(isbn => ({\r",
-              "    isbn: isbn\r",
-              "}));\r",
+              "// 🚨 CASE: User already has ALL books\r",
+              "if (availableIsbns.length === 0) {\r",
+              "    console.warn(\"All library books are already assigned to the user.\");\r",
               "\r",
-              "// Log number of books\r",
-              "console.info(\"No of books Added: \" + collection.length);\r",
+              "    // Mark flow complete\r",
+              "    pm.globals.set(\"noBooksLeft\", true);\r",
               "\r",
-              "// Save payload as global variable\r",
-              "pm.globals.set(\"isbnPayload\", JSON.stringify(collection));\r",
+              "    // Stop further execution (Runner-safe)\r",
+              "    postman.setNextRequest(null);\r",
+              "    return;\r",
+              "}\r",
               "\r",
-              "// Generate a safe random index\r",
-              "const randomIndex = Math.floor(Math.random() * collection.length);\r",
+              "// Pick random available ISBN\r",
+              "const randomIndex = Math.floor(Math.random() * availableIsbns.length);\r",
+              "const randomISBN = availableIsbns[randomIndex];\r",
               "\r",
-              "// Pick a random ISBN\r",
-              "const randomISBN = collection[randomIndex].isbn;\r",
-              "\r",
-              "// Save random ISBN\r",
+              "// Save for request body\r",
               "pm.globals.set(\"randomISBN\", randomISBN);\r",
+              "pm.globals.set(\"noBooksLeft\", false);\r",
               "\r",
-              "console.info(\"Random ISBN selected: \" + randomISBN);\r",
-              "\r",
+              "console.log(\"Random ISBN selected:\", randomISBN);\r",
               ""
             ],
             "type": "text/javascript",
@@ -297,7 +364,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "//add books to the created user \r\n{\r\n   \r\n  \"userId\": \"{{userID}}\",\r\n  \"collectionOfIsbns\": [\r\n    {\r\n        \"isbn\": \"{{randomISBN}}\"\r\n    }\r\n  ]\r\n}\r\n",
+          "raw": "//add books to the created user \r\n{\r\n  \"userId\": \"{{userID}}\",\r\n  \"collectionOfIsbns\": [\r\n    {\r\n      \"isbn\": \"{{randomISBN}}\"\r\n    }\r\n  ]\r\n}\r\n",
           "options": {
             "raw": {
               "language": "json"
@@ -319,14 +386,191 @@
       "response": []
     },
     {
-      "name": "Put ISBN",
+      "name": "Verify Book added or not",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Verify book added to user\", function () {\r",
+              "    pm.expect(pm.response.code).to.eql(200);\r",
+              "\r",
+              "    const res = pm.response.json();\r",
+              "    const userBooks = res.books.map(book => book.isbn);\r",
+              "\r",
+              "    const addedISBN = pm.globals.get(\"randomISBN\");\r",
+              "\r",
+              "    pm.expect(userBooks).to.include(addedISBN);\r",
+              "\r",
+              "    console.log(\" Book added successfully:\", addedISBN);\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
       "request": {
         "auth": {
           "type": "bearer",
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyTmFtZSI6InBhdmFuX3Rlc3RfMDA2IiwicGFzc3dvcmQiOiJQYXNzd29yZEAxMjMiLCJpYXQiOjE3NjkxMzM2Mjh9.pSn6E0iZoNnj73gNDZT7b_zxi1gGRJMr9I_intZCFaE",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BaseUrl}}/Account/v1/User/{{userID}}",
+          "host": [
+            "{{BaseUrl}}"
+          ],
+          "path": [
+            "Account",
+            "v1",
+            "User",
+            "{{userID}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get user details after ISBN added",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"User details fetched\", function () {",
+              "    pm.expect(pm.response.code).to.eql(200);",
+              "});",
+              "",
+              "const jsonData = pm.response.json();",
+              "",
+              "// Extract ISBNs already assigned to the user",
+              "const userIsbns = jsonData.books.map(book => book.isbn);",
+              "",
+              "// Store globally for later use",
+              "pm.globals.set(\"userIsbns\", JSON.stringify(userIsbns));",
+              "",
+              "console.log(\"User currently has ISBNs:\", userIsbns);",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "//Get all user library details",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{BaseUrl}}/Account/v1/User/{{userID}}",
+          "host": [
+            "{{BaseUrl}}"
+          ],
+          "path": [
+            "Account",
+            "v1",
+            "User",
+            "{{userID}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update User ISBN",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Book replaced successfully\", function () {\r",
+              "    pm.expect(pm.response.code).to.eql(200);\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Get user's current books\r",
+              "const userIsbns = JSON.parse(pm.globals.get(\"userIsbns\") || \"[]\");\r",
+              "\r",
+              "// Get all library books\r",
+              "const libraryIsbns = JSON.parse(pm.globals.get(\"libraryIsbns\") || \"[]\");\r",
+              "\r",
+              "// Safety checks\r",
+              "pm.expect(userIsbns.length).to.be.above(0);\r",
+              "\r",
+              "// Pick OLD ISBN (must exist for user)\r",
+              "const oldISBN = userIsbns[0];\r",
+              "\r",
+              "// Pick NEW ISBN (must exist in library & not in user books)\r",
+              "const availableIsbns = libraryIsbns.filter(\r",
+              "    isbn => !userIsbns.includes(isbn)\r",
+              ");\r",
+              "\r",
+              "pm.expect(availableIsbns.length).to.be.above(0);\r",
+              "\r",
+              "const newISBN =\r",
+              "    availableIsbns[Math.floor(Math.random() * availableIsbns.length)];\r",
+              "\r",
+              "// Save for request & verification\r",
+              "pm.globals.set(\"oldISBN\", oldISBN);\r",
+              "pm.globals.set(\"newISBN\", newISBN);\r",
+              "\r",
+              "console.log(`Replacing ISBN: ${oldISBN} → ${newISBN}`);\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
               "type": "string"
             }
           ]
@@ -335,7 +579,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "//replaces one existing book in a user’s collection with another valid book from the store catalog.\r\n{\r\n  \"userId\": \"14f4e069-6d6b-4fb4-9ed2-d841d4426c0a\",\r\n  \"isbn\": \"9781491904244\"\r\n}",
+          "raw": "//replaces one existing book in a user’s collection with another valid book from the store catalog.\r\n{\r\n  \"userId\": \"{{userID}}\",\r\n  \"isbn\": \"{{newISBN}}\"\r\n}\r\n",
           "options": {
             "raw": {
               "language": "json"
@@ -343,7 +587,7 @@
           }
         },
         "url": {
-          "raw": "{{BaseUrl}}/BookStore/v1/Books/9781449331818",
+          "raw": "{{BaseUrl}}/BookStore/v1/Books/{{oldISBN}}",
           "host": [
             "{{BaseUrl}}"
           ],
@@ -351,45 +595,221 @@
             "BookStore",
             "v1",
             "Books",
-            "9781449331818"
+            "{{oldISBN}}"
           ]
         }
       },
       "response": []
     },
     {
-      "name": "Delete Book",
+      "name": "Verify Book Updated or Not",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Verify book replaced successfully\", function () {\r",
+              "    pm.expect(pm.response.code).to.eql(200);\r",
+              "\r",
+              "    const books = pm.response.json().books.map(b => b.isbn);\r",
+              "    const oldISBN = pm.globals.get(\"oldISBN\");\r",
+              "    const newISBN = pm.globals.get(\"newISBN\");\r",
+              "\r",
+              "    pm.expect(books).to.not.include(oldISBN);\r",
+              "    pm.expect(books).to.include(newISBN);\r",
+              "\r",
+              "    console.log(`Book replaced: ${oldISBN} → ${newISBN}`);\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
       "request": {
         "auth": {
           "type": "bearer",
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyTmFtZSI6InBhdmFuX3Rlc3RfMDA2IiwicGFzc3dvcmQiOiJQYXNzd29yZEAxMjMiLCJpYXQiOjE3NjkxMzM2Mjh9.pSn6E0iZoNnj73gNDZT7b_zxi1gGRJMr9I_intZCFaE",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BaseUrl}}/Account/v1/User/{{userID}}",
+          "host": [
+            "{{BaseUrl}}"
+          ],
+          "path": [
+            "Account",
+            "v1",
+            "User",
+            "{{userID}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete All books for user",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Delete all books request succeeded\", function () {\r",
+              "    pm.expect([200, 204]).to.include(pm.response.code);\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
               "type": "string"
             }
           ]
         },
         "method": "DELETE",
         "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "//Delete IsBN for user\r\n{\r\n  \"isbn\": \"9781491904244\",\r\n  \"userId\": \"14f4e069-6d6b-4fb4-9ed2-d841d4426c0a\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
         "url": {
-          "raw": "{{BaseUrl}}/BookStore/v1/Book",
+          "raw": "{{BaseUrl}}/BookStore/v1/Books?UserId={{userID}}",
           "host": [
             "{{BaseUrl}}"
           ],
           "path": [
             "BookStore",
             "v1",
-            "Book"
+            "Books"
+          ],
+          "query": [
+            {
+              "key": "UserId",
+              "value": "{{userID}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Verify User Books deleted",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Verify user has no books after delete\", function () {\r",
+              "    pm.expect(pm.response.code).to.eql(200);\r",
+              "\r",
+              "    const books = pm.response.json().books;\r",
+              "    pm.expect(books.length).to.eql(0);\r",
+              "\r",
+              "    console.log(\" User book collection is empty\");\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BaseUrl}}/Account/v1/User/{{userID}}",
+          "host": [
+            "{{BaseUrl}}"
+          ],
+          "path": [
+            "Account",
+            "v1",
+            "User",
+            "{{userID}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Registered User",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"User deleted successfully\", function () {\r",
+              "    pm.expect([200, 204]).to.include(pm.response.code);\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{BaseUrl}}/Account/v1/User/{{userID}}",
+          "host": [
+            "{{BaseUrl}}"
+          ],
+          "path": [
+            "Account",
+            "v1",
+            "User",
+            "{{userID}}"
           ]
         }
       },
