@@ -1,43 +1,41 @@
-name: Postman CI - DemoQA API Tests
+name: Postman API Tests
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
+    branches:
+      - develop
+      - main
+  push:
+    branches:
+      - develop
+      - main
 
 jobs:
   postman-tests:
-    name: Run Postman Collection with Newman
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout repository
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      # 3️⃣ Install Newman
       - name: Install Newman
-        run: npm install -g newman
+        run: npm install -g newman newman-reporter-htmlextra
 
-      # 4️⃣ Run Postman Collection
-      - name: Run DemoQA Postman Collection
+      - name: Run Postman Collection
         run: |
           newman run postman/collections/DemoQA.postman_collection.json \
             -e postman/environments/DemoQA-env.postman_environment.json \
-            --reporters cli,junit \
-            --reporter-junit-export newman-report.xml
+            --reporters cli,htmlextra \
+            --reporter-htmlextra-export newman-report.html
 
-      # 5️⃣ Upload Newman Report (optional but recommended)
-      - name: Upload Newman Report
+      - name: Upload Newman HTML Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: newman-report
-          path: newman-report.xml
+          name: postman-report
+          path: newman-report.html
