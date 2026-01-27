@@ -2,9 +2,6 @@ name: Postman API Tests
 
 on:
   pull_request:
-    branches:
-      - develop
-      - main
   push:
     branches:
       - develop
@@ -15,20 +12,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: 18
 
       - name: Install Newman
         run: npm install -g newman newman-reporter-htmlextra
 
       - name: Run Postman Collection
         run: |
-          newman run postman/collections/DemoQA.postman_collection.json \
+          newman run postman/collections/demoqa.postman_collection.json \
             -e postman/environments/DemoQA-env.postman_environment.json \
             --reporters cli,htmlextra \
             --reporter-htmlextra-export newman-report.html
