@@ -17,7 +17,7 @@
               "{\r",
               "    pm.test(\"Validating  user creation\", function(){\r",
               "        pm.globals.set(\"userID\", pm.response.json().userID)\r",
-              "        pm.globals.set(\"username\", pm.response.json().username)\r",
+              "        pm.globals.set(\"Getusername\", pm.response.json().username)\r",
               "        pm.expect(pm.response.code).to.eql(201)\r",
               "        \r",
               "    })\r",
@@ -34,7 +34,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "//creates the user\r\n{\r\n  \"userName\": \"{{username}}\",\r\n  \"password\": \"{{password}}\"\r\n}\r\n",
+          "raw": "//creates the user\r\n{\r\n  \"userName\": \"user_{{$timestamp}}\",\r\n  \"password\": \"{{password}}\"\r\n}\r\n",
           "options": {
             "raw": {
               "language": "json"
@@ -42,9 +42,9 @@
           }
         },
         "url": {
-          "raw": "{{BaseUrl}}/Account/v1/User",
+          "raw": "{{baseUrl}}/Account/v1/User",
           "host": [
-            "{{BaseUrl}}"
+            "{{baseUrl}}"
           ],
           "path": [
             "Account",
@@ -80,7 +80,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "//Generate the token for the created user\r\n{\r\n  \"userName\": \"{{username}}\",\r\n  \"password\": \"{{password}}\"\r\n}\r\n",
+          "raw": "//Generate the token for the created user\r\n{\r\n  \"userName\": \"{{Getusername}}\",\r\n  \"password\": \"{{password}}\"\r\n}\r\n",
           "options": {
             "raw": {
               "language": "json"
@@ -88,9 +88,9 @@
           }
         },
         "url": {
-          "raw": "{{BaseUrl}}/Account/v1/GenerateToken",
+          "raw": "{{baseUrl}}/Account/v1/GenerateToken",
           "host": [
-            "{{BaseUrl}}"
+            "{{baseUrl}}"
           ],
           "path": [
             "Account",
@@ -134,7 +134,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "//check user is authorised or not\r\n{\r\n  \"userName\": \"{{username}}\",\r\n  \"password\": \"{{password}}\"\r\n}\r\n",
+          "raw": "//check user is authorised or not\r\n{\r\n  \"userName\": \"{{Getusername}}\",\r\n  \"password\": \"{{password}}\"\r\n}\r\n",
           "options": {
             "raw": {
               "language": "json"
@@ -142,9 +142,9 @@
           }
         },
         "url": {
-          "raw": "{{BaseUrl}}/Account/v1/Authorized",
+          "raw": "{{baseUrl}}/Account/v1/Authorized",
           "host": [
-            "{{BaseUrl}}"
+            "{{baseUrl}}"
           ],
           "path": [
             "Account",
@@ -207,9 +207,9 @@
           "raw": "//get book from library"
         },
         "url": {
-          "raw": "{{BaseUrl}}/BookStore/v1/Books",
+          "raw": "{{baseUrl}}/BookStore/v1/Books",
           "host": [
-            "{{BaseUrl}}"
+            "{{baseUrl}}"
           ],
           "path": [
             "BookStore",
@@ -274,9 +274,9 @@
           }
         },
         "url": {
-          "raw": "{{BaseUrl}}/Account/v1/User/{{userID}}",
+          "raw": "{{baseUrl}}/Account/v1/User/{{userID}}",
           "host": [
-            "{{BaseUrl}}"
+            "{{baseUrl}}"
           ],
           "path": [
             "Account",
@@ -372,9 +372,9 @@
           }
         },
         "url": {
-          "raw": "{{BaseUrl}}/BookStore/v1/Books",
+          "raw": "{{baseUrl}}/BookStore/v1/Books",
           "host": [
-            "{{BaseUrl}}"
+            "{{baseUrl}}"
           ],
           "path": [
             "BookStore",
@@ -426,9 +426,9 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{BaseUrl}}/Account/v1/User/{{userID}}",
+          "raw": "{{baseUrl}}/Account/v1/User/{{userID}}",
           "host": [
-            "{{BaseUrl}}"
+            "{{baseUrl}}"
           ],
           "path": [
             "Account",
@@ -494,9 +494,9 @@
           }
         },
         "url": {
-          "raw": "{{BaseUrl}}/Account/v1/User/{{userID}}",
+          "raw": "{{baseUrl}}/Account/v1/User/{{userID}}",
           "host": [
-            "{{BaseUrl}}"
+            "{{baseUrl}}"
           ],
           "path": [
             "Account",
@@ -587,9 +587,9 @@
           }
         },
         "url": {
-          "raw": "{{BaseUrl}}/BookStore/v1/Books/{{oldISBN}}",
+          "raw": "{{baseUrl}}/BookStore/v1/Books/{{oldISBN}}",
           "host": [
-            "{{BaseUrl}}"
+            "{{baseUrl}}"
           ],
           "path": [
             "BookStore",
@@ -642,9 +642,9 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{BaseUrl}}/Account/v1/User/{{userID}}",
+          "raw": "{{baseUrl}}/Account/v1/User/{{userID}}",
           "host": [
-            "{{BaseUrl}}"
+            "{{baseUrl}}"
           ],
           "path": [
             "Account",
@@ -699,9 +699,9 @@
         "method": "DELETE",
         "header": [],
         "url": {
-          "raw": "{{BaseUrl}}/BookStore/v1/Books?UserId={{userID}}",
+          "raw": "{{baseUrl}}/BookStore/v1/Books?UserId={{userID}}",
           "host": [
-            "{{BaseUrl}}"
+            "{{baseUrl}}"
           ],
           "path": [
             "BookStore",
@@ -755,9 +755,9 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{BaseUrl}}/Account/v1/User/{{userID}}",
+          "raw": "{{baseUrl}}/Account/v1/User/{{userID}}",
           "host": [
-            "{{BaseUrl}}"
+            "{{baseUrl}}"
           ],
           "path": [
             "Account",
@@ -801,9 +801,9 @@
         "method": "DELETE",
         "header": [],
         "url": {
-          "raw": "{{BaseUrl}}/Account/v1/User/{{userID}}",
+          "raw": "{{baseUrl}}/Account/v1/User/{{userID}}",
           "host": [
-            "{{BaseUrl}}"
+            "{{baseUrl}}"
           ],
           "path": [
             "Account",
@@ -816,11 +816,28 @@
       "response": []
     }
   ],
-  "variable": [
+  "event": [
     {
-      "key": "BaseUrl",
-      "value": "",
-      "type": "default"
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
     }
   ]
 }
