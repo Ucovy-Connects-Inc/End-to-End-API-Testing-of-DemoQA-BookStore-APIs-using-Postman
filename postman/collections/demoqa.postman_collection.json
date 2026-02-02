@@ -8,16 +8,16 @@
   },
   "item": [
     {
-      "name": "Postman",
+      "name": "postman",
       "item": [
         {
           "name": "collections",
           "item": [
             {
-              "name": "account-createuser",
+              "name": "account create user",
               "item": [
                 {
-                  "name": "CreateUser–Valid",
+                  "name": "create valid user",
                   "event": [
                     {
                       "listen": "test",
@@ -65,17 +65,18 @@
                   "response": []
                 },
                 {
-                  "name": "Create User – Weak Password",
+                  "name": "create User with weak password",
                   "event": [
                     {
                       "listen": "test",
                       "script": {
                         "exec": [
-                          "pm.test(\"Weak password rejected\", () => {\r",
+                          "pm.test(\"Weak password rejected with correct error\", () => {\r",
                           "    pm.expect(pm.response.code).to.eql(400);\r",
                           "\r",
                           "    const res = pm.response.json();\r",
                           "    pm.expect(res.code).to.eql(\"1300\");\r",
+                          "    pm.expect(res.message).to.include(\"Password\");\r",
                           "});\r",
                           ""
                         ],
@@ -112,17 +113,18 @@
                   "response": []
                 },
                 {
-                  "name": "Create User – Duplicate Username",
+                  "name": "create User with duplicate username",
                   "event": [
                     {
                       "listen": "test",
                       "script": {
                         "exec": [
-                          "pm.test(\"Duplicate user rejected\", () => {\r",
+                          "pm.test(\"Duplicate user rejected correctly\", () => {\r",
                           "    pm.expect(pm.response.code).to.eql(406);\r",
                           "\r",
                           "    const res = pm.response.json();\r",
                           "    pm.expect(res.code).to.eql(\"1204\");\r",
+                          "    pm.expect(res.message).to.eql(\"User exists!\");\r",
                           "});\r",
                           ""
                         ],
@@ -137,7 +139,7 @@
                     "header": [],
                     "body": {
                       "mode": "raw",
-                      "raw": "//creates the user\r\n{\r\n  \"userName\": \"{{Getusername\",\r\n  \"password\": \"{{password}}\"\r\n}\r\n",
+                      "raw": "//creates the user\r\n{\r\n  \"userName\": \"{{Getusername}}\",\r\n  \"password\": \"{{password}}\"\r\n}\r\n",
                       "options": {
                         "raw": {
                           "language": "json"
@@ -161,21 +163,28 @@
               ]
             },
             {
-              "name": "Account – Generate Token",
+              "name": "account generate token",
               "item": [
                 {
-                  "name": "Generate Token – Valid",
+                  "name": "generate token valid",
                   "event": [
                     {
                       "listen": "test",
                       "script": {
                         "exec": [
-                          "{\r",
                           "pm.test(\"Token is present\", function () {\r",
-                          "    pm.globals.set(\"token\", pm.response.json().token)\r",
-                          "        pm.expect(pm.response.code).to.eql(200)\r",
-                          "})\r",
-                          "}"
+                          "    pm.expect(pm.response.code).to.eql(200);\r",
+                          "\r",
+                          "    const responseJson = pm.response.json();\r",
+                          "\r",
+                          "    pm.expect(responseJson).to.have.property(\"token\");\r",
+                          "    pm.expect(responseJson).to.have.property(\"status\");\r",
+                          "    pm.expect(responseJson).to.have.property(\"result\");\r",
+                          "    pm.expect(responseJson).to.have.property(\"expires\");\r",
+                          "\r",
+                          "    pm.globals.set(\"token\", responseJson.token);\r",
+                          "});\r",
+                          ""
                         ],
                         "type": "text/javascript",
                         "packages": {},
@@ -210,13 +219,13 @@
                   "response": []
                 },
                 {
-                  "name": "Generate Token – Invalid",
+                  "name": "generate token invalid",
                   "event": [
                     {
                       "listen": "test",
                       "script": {
                         "exec": [
-                          "pm.test(\"Invalid credentials rejected\", () => {\r",
+                          "pm.test(\"Invalid credentials rejected correctly\", () => {\r",
                           "    pm.expect(pm.response.code).to.eql(200);\r",
                           "\r",
                           "    const res = pm.response.json();\r",
@@ -258,7 +267,7 @@
                   "response": []
                 },
                 {
-                  "name": "Generate Token – Empty Credentials",
+                  "name": "generate token with empty credentials",
                   "event": [
                     {
                       "listen": "test",
@@ -302,10 +311,10 @@
               ]
             },
             {
-              "name": "Account – Authorized",
+              "name": "account authorized",
               "item": [
                 {
-                  "name": "Authorized – Valid",
+                  "name": "authorized valid",
                   "event": [
                     {
                       "listen": "test",
@@ -359,7 +368,7 @@
                   "response": []
                 },
                 {
-                  "name": "Authorized – Invalid Password",
+                  "name": "authorized invalid password",
                   "event": [
                     {
                       "listen": "test",
@@ -415,13 +424,13 @@
               ]
             },
             {
-              "name": "BookStore",
+              "name": "bookstore",
               "item": [
                 {
-                  "name": "Get books",
+                  "name": "get books",
                   "item": [
                     {
-                      "name": "Get All Books",
+                      "name": "get all books",
                       "event": [
                         {
                           "listen": "test",
@@ -528,10 +537,10 @@
                   ]
                 },
                 {
-                  "name": "Get Book by ISBN",
+                  "name": "get book by ISBN",
                   "item": [
                     {
-                      "name": "Get Book by ISBN  Valid",
+                      "name": "get book by valid ISBN",
                       "event": [
                         {
                           "listen": "prerequest",
@@ -596,14 +605,17 @@
                       "response": []
                     },
                     {
-                      "name": "Get Book by ISBN Invalid",
+                      "name": "get book by invalid ISBN",
                       "event": [
                         {
                           "listen": "test",
                           "script": {
                             "exec": [
-                              "pm.test(\"Invalid ISBN rejected\", () => {\r",
-                              "    pm.expect(pm.response.code).to.be.oneOf([400,404]);\r",
+                              "pm.test(\"Invalid ISBN rejected with error\", () => {\r",
+                              "    pm.expect(pm.response.code).to.be.oneOf([400, 404]);\r",
+                              "\r",
+                              "    const res = pm.response.json();\r",
+                              "    pm.expect(res.message).to.include(\"ISBN\");\r",
                               "});\r",
                               ""
                             ],
@@ -647,7 +659,7 @@
                       "response": []
                     },
                     {
-                      "name": "Get Book by ISBN  Empty",
+                      "name": "get book by empty ISBN",
                       "event": [
                         {
                           "listen": "test",
@@ -700,10 +712,10 @@
                   ]
                 },
                 {
-                  "name": "Add books",
+                  "name": "add books",
                   "item": [
                     {
-                      "name": "Add Book Valiid",
+                      "name": "add  valid book",
                       "event": [
                         {
                           "listen": "prerequest",
@@ -800,7 +812,7 @@
                       "response": []
                     },
                     {
-                      "name": "Add Book without authorization",
+                      "name": "add book without authorization",
                       "event": [
                         {
                           "listen": "prerequest",
@@ -819,8 +831,11 @@
                           "listen": "test",
                           "script": {
                             "exec": [
-                              "pm.test(\"Unauthorized add rejected\", () => {\r",
+                              "pm.test(\"Unauthorized add book rejected\", () => {\r",
                               "    pm.expect(pm.response.code).to.eql(401);\r",
+                              "\r",
+                              "    const res = pm.response.json();\r",
+                              "    pm.expect(res.message).to.include(\"User not authorized\");\r",
                               "});\r",
                               ""
                             ],
@@ -860,7 +875,7 @@
                       "response": []
                     },
                     {
-                      "name": "Add Book Duplicate ISBN",
+                      "name": "add book with duplicate ISBN",
                       "event": [
                         {
                           "listen": "test",
@@ -929,28 +944,27 @@
                   ]
                 },
                 {
-                  "name": "Replace Book",
+                  "name": "replace book",
                   "item": [
                     {
-                      "name": "Get user details after ISBN added",
+                      "name": "get user details after ISBN added",
                       "event": [
                         {
                           "listen": "test",
                           "script": {
                             "exec": [
-                              "pm.test(\"User details fetched\", function () {",
-                              "    pm.expect(pm.response.code).to.eql(200);",
+                              "pm.test(\"User response schema valid\", () => {",
+                              "    const res = pm.response.json();",
+                              "",
+                              "    pm.expect(res).to.have.property(\"userId\");",
+                              "    pm.expect(res).to.have.property(\"username\");",
+                              "    pm.expect(res).to.have.property(\"books\").that.is.an(\"array\");",
+                              "    pm.globals.set(\"oldISBN\",pm.response.json().books[0].isbn);",
+                              "    res.books.forEach(book => {",
+                              "        pm.expect(book).to.have.property(\"isbn\");",
+                              "       ",
+                              "    });",
                               "});",
-                              "",
-                              "const jsonData = pm.response.json();",
-                              "",
-                              "// Extract ISBNs already assigned to the user",
-                              "const userIsbns = jsonData.books.map(book => book.isbn);",
-                              "",
-                              "// Store globally for later use",
-                              "pm.globals.set(\"userIsbns\", JSON.stringify(userIsbns));",
-                              "",
-                              "console.log(\"User currently has ISBNs:\", userIsbns);",
                               ""
                             ],
                             "type": "text/javascript",
@@ -1000,7 +1014,7 @@
                       "response": []
                     },
                     {
-                      "name": "Replace book Valid",
+                      "name": "replace valid book",
                       "event": [
                         {
                           "listen": "prerequest",
@@ -1029,7 +1043,7 @@
                               "    availableIsbns[Math.floor(Math.random() * availableIsbns.length)];\r",
                               "\r",
                               "// Save for request & verification\r",
-                              "pm.globals.set(\"oldISBN\", oldISBN);\r",
+                              "\r",
                               "pm.globals.set(\"newISBN\", newISBN);\r",
                               "\r",
                               "console.log(`Replacing ISBN: ${oldISBN} → ${newISBN}`);\r",
@@ -1098,7 +1112,7 @@
                       "response": []
                     },
                     {
-                      "name": "Replace book without auth",
+                      "name": "replace book without auth",
                       "event": [
                         {
                           "listen": "prerequest",
@@ -1184,7 +1198,7 @@
                       "response": []
                     },
                     {
-                      "name": "With Invalid ISBN",
+                      "name": "replace book with invalid ISBN",
                       "event": [
                         {
                           "listen": "test",
@@ -1241,10 +1255,10 @@
                   ]
                 },
                 {
-                  "name": "Delete Book",
+                  "name": "delete book",
                   "item": [
                     {
-                      "name": "Delete Single Book – Valid",
+                      "name": "delete single book valid",
                       "event": [
                         {
                           "listen": "prerequest",
@@ -1309,7 +1323,7 @@
                       "response": []
                     },
                     {
-                      "name": "Delete Single Book – Without Auth",
+                      "name": "delete single book without auth",
                       "event": [
                         {
                           "listen": "prerequest",
@@ -1373,7 +1387,7 @@
                       "response": []
                     },
                     {
-                      "name": "Delete All Books – Valid",
+                      "name": "delete all books valid",
                       "event": [
                         {
                           "listen": "test",
@@ -1428,7 +1442,7 @@
               ]
             },
             {
-              "name": "E2E positive Flow",
+              "name": "end to end positive flow",
               "item": [
                 {
                   "name": "user creation",
@@ -1479,7 +1493,7 @@
                   "response": []
                 },
                 {
-                  "name": "Generate Token",
+                  "name": "generate token",
                   "event": [
                     {
                       "listen": "test",
@@ -1525,7 +1539,7 @@
                   "response": []
                 },
                 {
-                  "name": "Authirization",
+                  "name": "authorization",
                   "event": [
                     {
                       "listen": "test",
@@ -1579,7 +1593,7 @@
                   "response": []
                 },
                 {
-                  "name": "Get Books from library",
+                  "name": "get books from library",
                   "event": [
                     {
                       "listen": "test",
@@ -1644,7 +1658,7 @@
                   "response": []
                 },
                 {
-                  "name": "Get user details",
+                  "name": "get user details",
                   "event": [
                     {
                       "listen": "test",
@@ -1712,7 +1726,7 @@
                   "response": []
                 },
                 {
-                  "name": "Add Books",
+                  "name": "add books",
                   "event": [
                     {
                       "listen": "test",
@@ -1809,7 +1823,7 @@
                   "response": []
                 },
                 {
-                  "name": "Verify Book added or not",
+                  "name": "verify book added or not",
                   "event": [
                     {
                       "listen": "test",
@@ -1864,7 +1878,7 @@
                   "response": []
                 },
                 {
-                  "name": "Get user details after ISBN added",
+                  "name": "get user details after ISBN added",
                   "event": [
                     {
                       "listen": "test",
@@ -1932,7 +1946,7 @@
                   "response": []
                 },
                 {
-                  "name": "Update User ISBN",
+                  "name": "update user ISBN",
                   "event": [
                     {
                       "listen": "test",
@@ -2025,7 +2039,7 @@
                   "response": []
                 },
                 {
-                  "name": "Verify Book Updated or Not",
+                  "name": "verify book updated or not",
                   "event": [
                     {
                       "listen": "test",
@@ -2080,7 +2094,7 @@
                   "response": []
                 },
                 {
-                  "name": "Delete All books for user",
+                  "name": "delete all books for user",
                   "event": [
                     {
                       "listen": "prerequest",
@@ -2142,7 +2156,7 @@
                   "response": []
                 },
                 {
-                  "name": "Verify User Books deleted",
+                  "name": "verify user books deleted",
                   "event": [
                     {
                       "listen": "test",
@@ -2193,7 +2207,7 @@
                   "response": []
                 },
                 {
-                  "name": "Delete Registered User",
+                  "name": "delete registered user",
                   "event": [
                     {
                       "listen": "test",
@@ -2239,6 +2253,33 @@
                   "response": []
                 }
               ]
+            }
+          ],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {},
+                "exec": [
+                  ""
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {},
+                "exec": [
+                  "pm.test(\"API response time within limit\", () => {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);\r",
+                  "});\r",
+                  ""
+                ]
+              }
             }
           ]
         }

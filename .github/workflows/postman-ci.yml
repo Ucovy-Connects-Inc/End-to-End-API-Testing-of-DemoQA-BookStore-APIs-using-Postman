@@ -28,6 +28,7 @@ jobs:
         run: |
           newman run postman/collections/demoqa.postman_collection.json \
             -e postman/environments/DemoQA-env.postman_environment.json \
+            --env-var password=${{ secrets.DEMOQA_PASSWORD }} \
             --reporters cli,htmlextra \
             --reporter-htmlextra-export newman-report.html
 
